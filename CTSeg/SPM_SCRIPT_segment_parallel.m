@@ -3,8 +3,8 @@ clear all;
 
 
 %% Initialize variables.
-folder = 'E:\PROCESSED_DATA\HEADCT\Axial-89-verified\spm_2\output';
-filename = fullfile(folder,'spm_file_list');
+folder = getenv('CTSEGRUNPATH');
+filename = fullfile(folder,'CTSeg_subjectlist.txt');
 fprintf('Loading subjects file list: \n%s\n',filename);
 delimiter = '';
 
@@ -17,7 +17,7 @@ n = 0;
 while ischar(tline)
     n = n+1;
     disp(tline)
-    file_list{n}=fullfile(folder,tline);
+    file_list{n}=fullfile(folder,tline,'reg.nii');
     tline = fgetl(fid);
 end
 fclose(fid);
@@ -25,7 +25,12 @@ fclose(fid);
 
 %% SPM PROCESSING
 
-fileToRead1 ='CT_seg.mat';
+CTSegpath = getenv('CTSEGPATH');
+
+
+fileToRead1 = fullfile(CTSegpath, 'utils', 'CT_seg.mat');
+
+fprintf('%s\n',fileToRead1)
 
 main_batch = load('-mat',fileToRead1);
 
@@ -44,6 +49,14 @@ parfor (j = 1:numsub,8)
     fprintf('Path: \n%s\n',file_list{j});
 
     loop_batch.matlabbatch{1, 1}.spm.spatial.preproc.channel.vols{1} = strcat(file_list{j},',1');
+    
+    
+    spmpath = fileparts(which('/spm.m'));
+    tpmpath = fullfile(spmpath,'tpm','TPM.nii');
+    
+    for k = 1:6
+        loop_batch.matlabbatch{1, 1}.spm.spatial.preproc.tissue(k).tpm{1} = strcat(tpmpath,',',num2str(k));
+    end
     
     matlabbatch = loop_batch.matlabbatch;
     
